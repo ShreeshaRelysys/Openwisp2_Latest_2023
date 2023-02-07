@@ -1,0 +1,25 @@
+[uwsgi]
+chdir={{ openwisp2_path }}
+uid=www-data
+module=openwisp2.wsgi:application
+master=True
+pidfile={{ openwisp2_path }}/uwsgi.pid
+socket={{ openwisp2_uwsgi_socket }}
+processes={{ openwisp2_uwsgi_processes }}
+threads={{ openwisp2_uwsgi_threads }}
+listen={{ openwisp2_uwsgi_listen }}
+harakiri=20
+max-requests=5000
+vacuum=True
+enable-threads=True
+env=HTTPS=on
+buffer-size=8192
+{% if openwisp2_uwsgi_gid %}
+gid={{ openwisp2_uwsgi_gid }}
+{% endif %}
+ignore-sigpipe
+ignore-write-errors
+disable-write-exception
+{% if openwisp2_uwsgi_extra_conf %}
+{{ openwisp2_uwsgi_extra_conf }}
+{% endif %}

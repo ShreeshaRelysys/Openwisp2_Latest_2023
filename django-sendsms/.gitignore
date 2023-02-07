@@ -1,0 +1,12 @@
+docs/_build
+*.pyc
+*.swp
+/.idea
+.ropeproject/
+*.egg-info
+.tox
+.eggs
+.coverage
+Pipfile
+Pipfile.lock
+lcov.info

@@ -1,0 +1,14 @@
+{{ openwisp2_path }}/log/nginx*.log {
+        maxsize 60M
+        missingok
+        rotate 5
+        compress
+        delaycompress
+        notifempty
+        create 0640 {{ www_user }} {{ www_group }}
+        su root {{ www_user }}
+        sharedscripts
+        postrotate
+                service nginx rotate >/dev/null 2>&1
+        endscript
+}

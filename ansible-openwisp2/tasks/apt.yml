@@ -1,0 +1,215 @@
+---
+
+- name: Update APT package cache
+  apt:
+    update_cache: true
+  changed_when: false
+  retries: 5
+  delay: 10
+  register: result
+  until: result is success
+  tags:
+    - molecule-idempotence-notest
+
+- name: Install system packages
+  apt:
+    name:
+      - sudo
+      - software-properties-common
+      - build-essential
+      - supervisor
+      - openssl
+      - libssl-dev
+      - libffi-dev
+      - python3
+      - virtualenv
+      - cron
+      # needed to generate SSH key for push updates
+      - openssh-client
+      - logrotate
+      # required for celerybeat
+      - python3-gdbm
+  ignore_errors: true
+  retries: 5
+  delay: 10
+  register: result
+  until: result is success
+
+- name: Install nginx
+  apt:
+    name: nginx
+  when: openwisp2_nginx_install
+
+- name: Install redis
+  apt:
+    name: redis-server
+  notify:
+    - Reload systemd
+    - Start redis
+  when: openwisp2_redis_install
+
+# On the newer versions of redis, by default redis
+# binds to localhost on ipv6 address which wouldn't
+# let the service start if the server doesn't have
+# ipv6 enabled. Hence, we set redis to listen on ipv4
+- name: Set redis to listen on ipv4
+  notify: Start redis
+  when: openwisp2_redis_install
+  lineinfile:
+    path: /etc/redis/redis.conf
+    regexp: '^bind 127\.0\.0\.1 ::1'
+    line: 'bind 127.0.0.1'
+    backrefs: true
+  ignore_errors: true
+
+- name: Start redis
+  when: openwisp2_redis_install
+  service:
+    name: redis
+    state: started
+
+- name: Install geographic libraries
+  apt:
+    name:
+      - gdal-bin
+      - libproj-dev
+      - libgeos-dev
+  retries: 5
+  delay: 10
+  register: result
+  until: result is success
+
+- name: Install spatialite
+  when: openwisp2_database.engine == "django.contrib.gis.db.backends.spatialite"
+  apt:
+    name:
+      - sqlite3
+      - libspatialite-dev
+  retries: 5
+  delay: 10
+  register: result
+  until: result is success
+  notify: Reload systemd
+
+- name: Install postgresql client drivers
+  when: openwisp2_database.engine == "django.contrib.gis.db.backends.postgis"
+  apt:
+    name: libpq-dev
+  retries: 5
+  delay: 10
+  register: result
+  until: result is success
+
+- name: Install cairo
+  when: openwisp2_radius
+  apt:
+    name:
+      - libcairo2
+      - libpango-1.0-0
+      - libpangocairo-1.0-0
+      - libgdk-pixbuf2.0-0
+      - shared-mime-info
+  tags: [openwisp2, radius]
+
+- name: Install mod-spatialite (may fail on older linux distros)
+  when: openwisp2_database.engine == "django.contrib.gis.db.backends.spatialite"
+  apt: name=libsqlite3-mod-spatialite
+  ignore_errors: true
+  retries: 5
+  delay: 10
+  register: result
+  until: result is success
+
+# fixes issue described in https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user
+- name: Install acl if acting as non-root user
+  apt: name=acl
+  when: ansible_user is not defined or ansible_user != 'root'
+  retries: 5
+  delay: 10
+  register: result
+  until: result is success
+  ignore_errors: true
+
+- name: Ensure supervisor is started
+  service: name=supervisor state=started
+
+- name: Should Install Python 3.7
+  block:
+    - name: Check installed python version
+      command: "{{ openwisp2_python }} --version"
+      register: openwisp2_installed_python
+      changed_when: false
+    - name: Check openwisp2 should install python 3.7
+      set_fact:
+        openwisp2_should_install_python_37: |
+          {{ ansible_python_version is version_compare('3.7', 'lt') }}
+
+- name: Install Python 3.7 and required packages from ppa:deadsnakes/ppa
+  block:
+    - name: Install software-properties-common
+      apt:
+        name:
+          - software-properties-common
+      ignore_errors: true
+      retries: 5
+      delay: 10
+      register: result
+      until: result is success
+    - name: Add deadsnakes PPA
+      apt_repository:
+        repo: ppa:deadsnakes/ppa
+        state: present
+    - name: Install Python 3.7
+      apt:
+        name:
+          - python3.7
+          - python3.7-dev
+          - python3.7-venv
+      ignore_errors: true
+      retries: 5
+      delay: 10
+      register: result
+      until: result is success
+    - name: Set python 3.7
+      set_fact:
+        openwisp2_python: python3.7
+  when: openwisp2_should_install_python_37
+
+- name: Install python3 packages
+  apt:
+    name:
+      - python3-pip
+      - python3-dev
+      - python3-virtualenv
+  retries: 5
+  delay: 10
+  register: result
+  until: result is success
+  when: not openwisp2_should_install_python_37
+
+- name: Install ntp
+  when: openwisp2_install_ntp
+  apt: name=ntp
+  retries: 5
+  delay: 10
+  register: result
+  until: result is success
+
+- name: Install gettext
+  apt:
+    name: gettext
+  when: openwisp2_internationalization
+  retries: 5
+  delay: 10
+  register: result
+  until: result is success
+
+- name: Install fping
+  when: openwisp2_monitoring
+  apt:
+    name:
+      - fping
+  retries: 5
+  delay: 10
+  register: result
+  until: result is success

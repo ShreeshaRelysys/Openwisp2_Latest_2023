@@ -1,0 +1,201 @@
+---
+
+openwisp2_python: python3
+ansible_python_interpreter: /usr/bin/python3
+openwisp2_network_topology: false
+openwisp2_firmware_upgrader: false
+openwisp2_monitoring: true
+openwisp2_radius: false
+openwisp2_controller_subnet_division: false
+openwisp2_radius_urls: "{{ openwisp2_radius }}"
+openwisp2_controller_version: "openwisp-controller~=1.0.1"
+openwisp2_network_topology_version: "openwisp-network-topology~=1.0.0"
+openwisp2_firmware_upgrader_version: "openwisp-firmware-upgrader~=1.0.1"
+openwisp2_monitoring_version: "openwisp-monitoring~=1.0.0"
+openwisp2_radius_version: "openwisp-radius~=1.0.1"
+openwisp2_django_version: "{{ 'django~=4.0.0' if ansible_distribution_release | string in ['focal', 'bullseye'] else 'django~=3.2.13' }}"
+openwisp2_extra_python_packages:
+    - bpython
+openwisp2_extra_django_apps: []
+openwisp2_extra_django_settings: {}
+openwisp2_extra_django_settings_instructions: []
+openwisp2_controller_urls: true
+openwisp2_extra_urls: []
+openwisp2_websocket_extra_imports: []
+openwisp2_websocket_extra_routes: []
+openwisp2_path: "/opt/openwisp2"
+openwisp2_default_from_email: "openwisp2@{{ inventory_hostname }}"
+openwisp2_email_backend: "djcelery_email.backends.CeleryEmailBackend"
+openwisp2_email_timeout: 10
+openwisp2_database:
+    engine: "django.contrib.gis.db.backends.spatialite"
+    name: "{{ openwisp2_path }}/db.sqlite3"
+    user: ""
+    password: ""
+    host: ""
+    port: ""
+    options: {}
+openwisp2_spatialite_path: null
+openwisp2_language_code: "en-gb"
+openwisp2_time_zone: "UTC"
+openwisp2_context: {}
+openwisp2_allowed_hosts: []
+openwisp2_leaflet_config: {}
+openwisp2_geocoding_check: true
+openwisp2_ssl_cert: "{{ openwisp2_path }}/ssl/server.crt"
+openwisp2_ssl_key: "{{ openwisp2_path }}/ssl/server.key"
+openwisp2_ssl_country: "US"
+openwisp2_ssl_state: "California"
+openwisp2_ssl_locality: "San Francisco"
+openwisp2_ssl_organization: "IT dep."
+openwisp2_ssl_common_name: "{{ inventory_hostname }}"
+openwisp2_http_allowed_ip: false
+openwisp2_nginx_install: true
+openwisp2_nginx_openwisp_server:
+    - "unix://{{ openwisp2_path }}/uwsgi.sock"
+openwisp2_nginx_spdy: false
+openwisp2_nginx_http2: false
+openwisp2_nginx_ipv6: false
+openwisp2_nginx_client_max_body_size: 20M
+openwisp2_nginx_csp: >
+    "default-src http: https: data: blob: 'unsafe-inline';
+    script-src 'unsafe-eval' https: 'unsafe-inline' 'self';
+    frame-ancestors 'self'; connect-src https://{{ inventory_hostname }} wss: 'self';
+    worker-src https://{{ inventory_hostname }} blob: 'self';" always;
+openwisp2_uwsgi_gid: null
+openwisp2_admin_allowed_network: null
+openwisp2_install_ntp: true
+openwisp2_sentry:
+    dsn: false
+openwisp2_default_cert_validity: 1825
+openwisp2_default_ca_validity: 3650
+openwisp2_default_organization_id: 78f74fdd-67c6-4064-97e1-ce761da30745
+openwisp2_notifications_delete_old_notifications: 90
+openwisp2_firmware_upgrader_max_file_size: 31457280  # 30MB
+openwisp2_topology_update_frequency:
+    day: "*"
+    hour: "*"
+    minute: "*/5"
+openwisp2_topology_save_snapshot_frequency:
+    day: "*"
+    hour: "23"
+    minute: "30"
+openwisp2_django_sesame_max_age: 1800  # 30 minutes
+openwisp2_nginx_ssl_config:
+    gzip: "on"
+    gzip_comp_level: "6"
+    gzip_proxied: "any"
+    gzip_min_length: "1000"
+    gzip_types:
+        - "text/plain"
+        - "image/svg+xml"
+        - "application/json"
+        - "application/javascript"
+        - "text/xml"
+        - "text/css"
+        - "application/xml"
+        - "application/x-font-ttf"
+        - "font/opentype"
+openwisp2_redis_install: true
+openwisp2_redis_host: localhost
+openwisp2_redis_port: 6379
+openwisp2_redis_cache_url: "redis://{{ openwisp2_redis_host }}:{{ openwisp2_redis_port }}/1"
+openwisp2_influxdb_install: true
+openwisp2_timeseries_database:
+    backend: "openwisp_monitoring.db.backends.influxdb"
+    user: "openwisp"
+    password: "openwisp"
+    name: "openwisp2"
+    host: "localhost"
+    port: 8086
+openwisp2_nginx_access_log: "{{ openwisp2_path }}/log/nginx.access.log"
+openwisp2_nginx_error_log: "{{ openwisp2_path }}/log/nginx.error.log error"
+openwisp2_celerybeat: true
+# keep backward compatibility with old variable openwisp2_eventlet_concurrency
+openwisp2_celery_concurrency: "{{ openwisp2_eventlet_concurrency | default(1) }}"
+openwisp2_celery_autoscale: null
+openwisp2_celery_prefetch_multiplier: null
+openwisp2_celery_optimization: default
+openwisp2_celery_network: true
+openwisp2_celery_network_concurrency: 1
+openwisp2_celery_network_autoscale: null
+openwisp2_celery_network_prefetch_multiplier: 1
+openwisp2_celery_network_optimization: fair
+openwisp2_celery_firmware_upgrader: true
+openwisp2_celery_firmware_upgrader_concurrency: 1
+openwisp2_celery_firmware_upgrader_autoscale: null
+openwisp2_celery_firmware_upgrader_prefetch_multiplier: 1
+openwisp2_celery_firmware_upgrader_optimization: fair
+openwisp2_celery_monitoring: true
+openwisp2_celery_monitoring_concurrency: 2
+openwisp2_celery_monitoring_autoscale: null
+openwisp2_celery_monitoring_prefetch_multiplier: 1
+openwisp2_celery_monitoring_optimization: fair
+openwisp2_celery_task_routes_defaults: true
+openwisp2_celery_broker_url: redis://{{ openwisp2_redis_host }}:{{ openwisp2_redis_port }}/3
+openwisp2_celery_task_acks_late: true
+openwisp2_celery_broker_max_tries: 10
+openwisp2_django_celery_logging: false
+openwisp2_postfix_install: true
+postfix_smtpd_relay_restrictions_override: "permit_sasl_authenticated, permit_mynetworks, check_relay_domains, reject_unauth_destination, reject"
+openwisp2_uwsgi_processes: 1
+openwisp2_uwsgi_threads: 1
+openwisp2_uwsgi_listen: 100
+openwisp2_uwsgi_socket: "{{ openwisp2_path }}/uwsgi.sock"
+openwisp2_uwsgi_extra_conf: |
+  single-interpreter=True
+  log-4xx=True
+  log-5xx=True
+  disable-logging=True
+  auto-procname=True
+openwisp2_daphne_install: true
+openwisp2_daphne_processes: 1
+openwisp2_daphne_websocket_timeout: 3600  # in seconds
+# internationalization
+openwisp2_internationalization: false
+openwisp2_users_auth_api: true
+openwisp2_radius_sms_backend: "sendsms.backends.console.SmsBackend"
+openwisp2_radius_sms_token_max_ip_daily: 25
+openwisp2_radius_delete_old_users: 365
+openwisp2_radius_cleanup_stale_radacct: 1
+openwisp2_radius_delete_old_postauth: 365
+openwisp2_radius_delete_old_radacct: 365
+openwisp2_radius_allowed_hosts: ["127.0.0.1"]
+openwisp2_freeradius_install: true
+freeradius_dir: /etc/freeradius
+freeradius_mods_available_dir: "{{ freeradius_dir }}/mods-available"
+freeradius_mods_enabled_dir: "{{ freeradius_dir }}/mods-enabled"
+freeradius_mods_config_dir: "{{ freeradius_dir }}/mods-config"
+freeradius_sites_available_dir: "{{ freeradius_dir }}/sites-available"
+freeradius_sites_enabled_dir: "{{ freeradius_dir }}/sites-enabled"
+freeradius_openwisp_site_template_src: freeradius/openwisp_site.j2
+freeradius_db_map:
+    django.contrib.gis.db.backends.spatialite:
+        driver: rlm_sql_sqlite
+        dialect: sqlite
+    django.contrib.gis.db.backends.postgis:
+        driver: rlm_sql_postgresql
+        dialect: postgresql
+    django.contrib.gis.db.backends.mysql:
+        driver: rlm_sql_mysql
+        dialect: mysql
+freeradius_sql:
+    driver: "{{ freeradius_db_map[openwisp2_database.engine].driver }}"
+    dialect: "{{ freeradius_db_map[openwisp2_database.engine].dialect }}"
+freeradius_rest:
+    url: "https://{{ inventory_hostname }}/api/v1/freeradius"
+freeradius_expire_attr_after_seconds: 86400
+freeradius_safe_characters: "+@abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-_: /"
+freeradius_openwisp_site_listen_ipaddr: "*"
+cron_delete_old_notifications: "'hour': 0, 'minute': 0"
+cron_deactivate_expired_users: "'hour': 0, 'minute': 5"
+cron_delete_old_users: "'hour': 0, 'minute': 10"
+cron_cleanup_stale_radacct: "'hour': 0, 'minute': 20"
+cron_delete_old_postauth: "'hour': 0, 'minute': 30"
+cron_delete_old_radacct: "'hour': 1, 'minute': 30"
+# Cross-Origin Resource Sharing (CORS) settings
+openwisp2_django_cors:
+    enabled: false
+    allowed_origins_list: []
+    replace_https_referer: false
+openwisp2_extra_supervisor_restart: []

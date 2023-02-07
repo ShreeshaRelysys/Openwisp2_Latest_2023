@@ -1,0 +1,25 @@
+---
+
+dependencies: []
+
+galaxy_info:
+  role_name: influxdb
+  namespace: openwisp
+  author: openwisp
+  company: OpenWISP
+  description: Simple ansible role for installing and configuring influxdb.
+  license:
+  min_ansible_version: 2.7
+  platforms:
+    - name: Ubuntu
+      versions:
+        - 18.04
+        - 20.04
+        - 22.04
+    - name: Debian
+      versions:
+        - 10
+        - 11
+  galaxy_tags:
+    - system
+    - networking

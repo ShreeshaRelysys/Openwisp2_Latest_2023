@@ -1,0 +1,41 @@
+---
+
+- import_tasks: variables-spatialite.yml
+  tags: [openwisp2, apt, yum, pip, django, supervisor, nginx, variables]
+  when: >
+    openwisp2_database.engine == "django.contrib.gis.db.backends.spatialite"
+    and openwisp2_spatialite_path is none
+
+- import_tasks: apt.yml
+  tags: [openwisp2, apt]
+
+- import_tasks: ssh.yml
+  tags: [openwisp2, ssh]
+
+- name: Import system tasks
+  import_tasks: system.yml
+  tags: [openwisp2, system]
+
+- import_tasks: pip.yml
+  tags: [openwisp2, pip]
+
+# comprises django_secret_key.yml
+- import_tasks: django.yml
+  tags: [openwisp2, django]
+
+- import_tasks: freeradius.yml
+  when: openwisp2_radius and openwisp2_freeradius_install
+  tags: [openwisp2, freeradius]
+
+- import_tasks: supervisor.yml
+  tags: [openwisp2, supervisor]
+
+- import_tasks: nginx.yml
+  when: openwisp2_nginx_install
+  tags: [openwisp2, nginx]
+
+- import_tasks: cron.yml
+  tags: [openwisp2, cron]
+
+- import_tasks: complete.yml
+  tags: [openwisp2]

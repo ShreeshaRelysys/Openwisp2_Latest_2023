@@ -1,0 +1,52 @@
+---
+
+dependencies:
+  - src: https://github.com/openwisp/Stouts.postfix
+    version: origin/main
+    name: Stouts.postfix
+    when: openwisp2_postfix_install
+    postfix_smtp_sasl_auth_enable: "{{ postfix_smtp_sasl_auth_enable_override | default(false) }}"
+    postfix_smtpd_relay_restrictions: "{{ postfix_smtpd_relay_restrictions_override }}"
+
+  - src: https://github.com/openwisp/ansible-ow-influxdb
+    version: origin/master
+    name: openwisp.influxdb
+    when: openwisp2_monitoring and openwisp2_influxdb_install
+
+galaxy_info:
+  role_name: openwisp2
+  namespace: openwisp
+  author: Federico Capoano
+  company: OpenWISP
+  description: Official role to install and upgrade openwisp2 controller
+  license: BSD
+  min_ansible_version: "2.10"
+  issue_tracker_url: https://github.com/openwisp/ansible-openwisp2/issues
+  platforms:
+    - name: Debian
+      versions:
+        # (send patch if you want this to be supported!)
+        # https://github.com/openwisp/ansible-openwisp2/issues/169#issuecomment-592983139
+        # - stretch
+        - buster
+        - bullseye
+    - name: Ubuntu
+      versions:
+        # (send patch if you want this to be supported!)
+        # https://github.com/openwisp/ansible-openwisp2/issues/169#issuecomment-592983139
+        # - xenial
+        - bionic
+        - focal
+        - jammy
+  # we don't have the resources now to maintain these distros
+  # - name: Fedora
+  #   versions:
+  #   - 27
+  #   - 28
+  # - name: EL
+  #   versions:
+  #   - 7
+  galaxy_tags:
+    - system
+    - networking
+    - openwisp

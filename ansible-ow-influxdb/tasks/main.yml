@@ -1,0 +1,123 @@
+---
+
+- name: Install gpg (update apt cache first)
+  apt:
+    name: gpg
+    cache_valid_time: 3000
+    state: latest
+  tags: [influxdb]
+
+- name: Install gpg-agent (update apt cache first)
+  apt:
+    name: gpg-agent
+    cache_valid_time: 3000
+    state: latest
+  tags: [influxdb]
+
+- name: Install logrotate
+  apt:
+    name: logrotate
+    cache_valid_time: 3000
+    state: latest
+  tags: [influxdb]
+
+- name: Install system dependencies
+  apt:
+    name:
+      - curl
+      - rsyslog
+    cache_valid_time: 3000
+    state: latest
+  tags: [influxdb]
+
+- name: Add influxdb key
+  apt_key:
+    url: https://repos.influxdata.com/influxdata-archive_compat.key
+    state: present
+  tags: [influxdb]
+
+- name: Add influxdb repo
+  apt_repository:
+    repo: "deb https://repos.influxdata.com/{{ ansible_distribution.lower() }}/ {{ ansible_distribution_release  }} stable"
+    state: present
+  tags: [influxdb]
+
+- name: Install influxdb (update apt cache first)
+  apt:
+    name: influxdb
+    state: latest
+  notify: restart influxdb
+  tags: [influxdb]
+
+- name: Set influxdb HTTP IP and port
+  lineinfile:
+    path: /etc/influxdb/influxdb.conf
+    regexp: '^  # bind-address = ":8086"'
+    line: '  bind-address = "{{ influxdb_http_ip }}:{{ influxdb_http_port }}"'
+    backrefs: true
+  when: influxdb_http_ip != 'localhost' or influxdb_http_port != 8086
+  notify: restart influxdb
+  tags: [influxdb]
+
+- name: Disable HTTP query logging for influxdb
+  block:
+    - lineinfile:
+        path: /etc/influxdb/influxdb.conf
+        line: '  log-enabled = false'
+        insertafter: '\[http\]'
+        state: present
+    - lineinfile:
+        path: /etc/influxdb/influxdb.conf
+        line: '  query-log-enabled = false'
+        insertafter: '\[data\]'
+        state: present
+  when: not influxdb_query_logging
+  tags: [influxdb]
+
+- name: Enable HTTP query logging for influxdb
+  block:
+    - lineinfile:
+        path: /etc/influxdb/influxdb.conf
+        line: '  log-enabled = false'
+        insertafter: '\[http\]'
+        state: absent
+    - lineinfile:
+        path: /etc/influxdb/influxdb.conf
+        line: '  query-log-enabled = false'
+        insertafter: '\[data\]'
+        state: absent
+  when: influxdb_query_logging
+  tags: [influxdb]
+
+- name: Set maxsize of rsyslog logrotate configuration
+  block:
+    - lineinfile:
+        path: /etc/logrotate.d/rsyslog
+        firstmatch: false
+        line: '        maxsize 65M'
+        insertafter: '\{'
+    - lineinfile:
+        path: /etc/logrotate.d/rsyslog
+        firstmatch: true
+        line: '        maxsize 65M'
+        insertafter: '\{'
+  tags: [influxdb]
+
+- name: Set influxdb dir permissions
+  file:
+    path: /var/lib/influxdb
+    state: directory
+    owner: influxdb
+    group: influxdb
+    recurse: true
+  tags: [influxdb]
+
+- name: ensure influxdb is started and enabled
+  service:
+    name: influxdb
+    state: started
+    enabled: true
+  tags: [influxdb]
+
+- import_tasks: authentication.yml
+  tags: [influxdb]

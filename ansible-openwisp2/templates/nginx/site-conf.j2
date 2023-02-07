@@ -1,0 +1,154 @@
+upstream channels-backend {
+    server unix://{{ openwisp2_path }}/daphne0.sock fail_timeout=0;
+}
+
+upstream openwisp-server {
+    {% for server in openwisp2_nginx_openwisp_server %}
+    server {{ server }};
+    {% endfor %}
+}
+
+server {
+    listen 443 ssl{% if openwisp2_nginx_spdy %} spdy{% endif %}{% if openwisp2_nginx_http2 %} http2{% endif %};  # ipv4
+    {% if openwisp2_nginx_ipv6 %}listen [::]:443 ssl{% if openwisp2_nginx_spdy %} spdy{% endif %}{% if openwisp2_nginx_http2 %} http2{% endif %};  # ipv6{% endif %}
+
+    # accepted hostnames on port 443
+    server_name {{ inventory_hostname }}{% for host in openwisp2_allowed_hosts %} {{ host }}{% endfor %};
+
+    root {{ openwisp2_path }}/public_html;
+    index index.html index.htm;
+
+    # logging
+    access_log {{ openwisp2_nginx_access_log }};
+    error_log {{ openwisp2_nginx_error_log }};
+
+    # set client body size #
+    client_max_body_size {{ openwisp2_nginx_client_max_body_size }};
+
+    include {{ openwisp2_path }}/nginx-conf/openwisp2/ssl.conf;
+    include {{ openwisp2_path }}/nginx-conf/openwisp2/security.conf;
+
+    {% for key, value in openwisp2_nginx_ssl_config.items() %}
+        {% if value is sequence and value is not string -%}
+            {{ key }} {{ ' '.join(value) }};
+        {% else -%}
+            {{ key }} {{ value }};
+        {%- endif %}
+    {% endfor %}
+
+    location @uwsgi {
+        uwsgi_pass openwisp-server;
+        include uwsgi_params;
+        uwsgi_param HTTP_X_FORWARDED_PROTO https;
+    }
+
+    location / {
+        try_files {{ openwisp2_path }}/public_html/maintenance.html $uri $uri/index.html @uwsgi;
+    }
+
+    # websockets
+    location /ws/ {
+        rewrite  ^/(.*)  /$1 break;
+        proxy_pass http://channels-backend;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_redirect off;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Host $server_name;
+    }
+
+    {% if openwisp2_admin_allowed_network %}
+    location /admin/ {
+        try_files {{ openwisp2_path }}/public_html/maintenance.html $uri @uwsgi;
+        allow {{ openwisp2_admin_allowed_network }};
+        deny all;
+    }
+    {% endif %}
+
+    location /static/ {
+        alias {{ openwisp2_path }}/static/;
+    }
+
+    location /media/ {
+        alias {{ openwisp2_path }}/media/;
+    }
+}
+
+server {
+    listen 80;  # ipv4
+    {% if openwisp2_nginx_ipv6 %}listen [::]:80;  # ipv6{% endif %}
+
+    # accepted hostnames on port 80
+    server_name {{ inventory_hostname }}{% for host in openwisp2_allowed_hosts %} {{ host }}{% endfor %};
+
+    root {{ openwisp2_path }}/public_html;
+
+    # Necessary for Let's Encrypt Domain Name ownership validation
+    location /.well-known/ {
+        try_files   $uri /dev/null =404;
+    }
+
+    {% if openwisp2_http_allowed_ip %}
+    location @uwsgi {
+        uwsgi_pass openwisp-server;
+        include uwsgi_params;
+        uwsgi_param HTTP_X_FORWARDED_PROTO http;
+    }
+
+    location / {
+        error_page 403 = @deny;
+        allow {{ openwisp2_http_allowed_ip }};
+        deny all;
+        try_files $uri $uri/index.html @uwsgi;
+    }
+
+    location @deny {
+        return 301 https://$host$request_uri;
+    }
+
+    location /static/ {
+        alias {{ openwisp2_path }}/static/;
+    }
+
+    location /media/ {
+        alias {{ openwisp2_path }}/media/;
+    }
+    {% else %}
+
+    location / {
+        try_files {{ openwisp2_path }}/public_html/maintenance.html $uri $uri/index.html @redirect;
+    }
+
+    # redirect all requests to https
+    location @redirect {
+        return 301 https://$host$request_uri;
+    }
+    {% endif %}
+
+}
+
+server {
+    listen 80 default_server;
+    {% if openwisp2_nginx_ipv6 %}listen [::]:80 default_server; # ipv6{% endif %}
+
+    server_name _;
+
+    return 404;
+}
+
+server {
+    listen 443 ssl default_server;
+    {% if openwisp2_nginx_ipv6 %}listen [::]:443 ssl default_server; # ipv6{% endif %}
+
+    server_name _;
+
+    include {{ openwisp2_path }}/nginx-conf/openwisp2/ssl.conf;
+    include {{ openwisp2_path }}/nginx-conf/openwisp2/security.conf;
+
+    return 404;
+}

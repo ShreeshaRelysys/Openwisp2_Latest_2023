@@ -1,0 +1,30 @@
+# NOTE: This Docker image is for development purposes only.
+
+version: "3"
+
+services:
+  controller:
+    image: openwisp/controller-development:latest
+    environment:
+      - REDIS_URL=redis://redis:6379
+    build:
+      context: .
+    ports:
+      - 8000:8000
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    entrypoint: redis-server --appendonly yes
+
+  postgres:
+    image: mdillon/postgis:11-alpine
+    environment:
+      POSTGRES_PASSWORD: openwisp2
+      POSTGRES_USER: openwisp2
+      POSTGRES_DB: openwisp2
+    ports:
+      - 5432:5432
